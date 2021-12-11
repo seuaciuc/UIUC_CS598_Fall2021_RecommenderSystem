@@ -9,14 +9,15 @@ import surprise
 MINREVIEW = 10
 K = 5
 pklfile = 'movieRatings.pkl'
+ratingsFile = 'ratings.dat'
 newuserID = 9999
 seed = 42
 
 # load file
 fid = open(pklfile,'rb')
 movieRatings = pickle.load(fid)
-ratings = pickle.load(fid)
 fid.close()
+ratings = pd.read_csv(ratingsFile,sep='::',header=None,engine='python',names=['UserID','MovieID','Rating','Timestamp'],index_col=False)
 
 genres = list(movieRatings.columns[3:21])
 movies = list(set(ratings['MovieID']))
