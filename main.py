@@ -17,10 +17,10 @@ seed = 42
 fid = open(pklfile,'rb')
 movieRatings = pickle.load(fid)
 fid.close()
-ratings = pd.read_csv(ratingsFile,sep='::',header=None,engine='python',names=['UserID','MovieID','Rating','Timestamp'],index_col=False)
+
 
 genres = list(movieRatings.columns[3:21])
-movies = list(set(ratings['MovieID']))
+
 
 
 ### FUNCTION TO OBTAIN THE RECOMMENDATIONS
@@ -35,15 +35,15 @@ def getGenderBasedRecommendations(movieRatings,genre,K):
 
 # list of 10 most popular movies for review (abstracted from inspection of movieRatings)
 top10 = movieRatings.sort_values(by='nReviews',ascending=False,ignore_index=True)[:10]
-# get genre string
-genrestr = []
-for row in range(10):
-    # find genres
-    idx = np.where(top10.iloc[row][3:21]==1)[0]
-    gstr = genres[idx[0]]
-    for it in range(1,len(idx)):
-        gstr = gstr + ' | ' + genres[idx[it]]
-    genrestr.append(gstr)
+# # get genre string
+# genrestr = []
+# for row in range(10):
+#     # find genres
+#     idx = np.where(top10.iloc[row][3:21]==1)[0]
+#     gstr = genres[idx[0]]
+#     for it in range(1,len(idx)):
+#         gstr = gstr + ' | ' + genres[idx[it]]
+#     genrestr.append(gstr)
 
 
 ### CREATE THE SIDE BAR FOR CHOICE OF RECOMMENDER SYSTEM
@@ -80,21 +80,13 @@ if radio == "Genre-based":
 
 # collaborative recommendation
 elif radio == "Collaborative":
+    ratings = pd.read_csv(ratingsFile,sep='::',header=None,engine='python',names=['UserID','MovieID','Rating','Timestamp'],index_col=False)
+    movies = list(set(ratings['MovieID']))
     st.write("Please rate the following movies:")
     #left_column, right_column = st.columns(2)
     newRatings = np.zeros(10)
-    # with left_column:
-    #     for it in range(5):
-    #         #st.write("**"+top10['Title'][it]+"**  \n"+genrestr[it])
-    #         st.write("**"+top10['Title'][it]+"**")
-    #         newRatings[it] = st.select_slider(genrestr[it],options=[1,2,3,4,5],key=it,value=3)
-    # with right_column:
-    #     for it in range(5,10):
-    #         #st.write("**"+top10['Title'][it]+"**  \n"+genrestr[it])
-    #         st.write("**"+top10['Title'][it]+"**")
-    #         newRatings[it] = st.select_slider(genrestr[it],options=[1,2,3,4,5],key=it, value=3)
     for it in range(10):
-        st.write("**"+top10['Title'][it]+"**  \n"+genrestr[it])
+        st.write("**"+top10['Title'][it]+"**  \n"+top10['Genres'][it])
         newRatings[it] = st.select_slider('',options=[1,2,3,4,5],key=it,value=3)
         st.write('---')
     if st.button('Get movie recommendations'):
