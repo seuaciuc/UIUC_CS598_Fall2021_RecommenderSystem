@@ -35,16 +35,6 @@ def getGenderBasedRecommendations(movieRatings,genre,K):
 
 # list of 10 most popular movies for review (abstracted from inspection of movieRatings)
 top10 = movieRatings.sort_values(by='nReviews',ascending=False,ignore_index=True)[:10]
-# # get genre string
-# genrestr = []
-# for row in range(10):
-#     # find genres
-#     idx = np.where(top10.iloc[row][3:21]==1)[0]
-#     gstr = genres[idx[0]]
-#     for it in range(1,len(idx)):
-#         gstr = gstr + ' | ' + genres[idx[it]]
-#     genrestr.append(gstr)
-
 
 ### CREATE THE SIDE BAR FOR CHOICE OF RECOMMENDER SYSTEM
 st.sidebar.title("Recommender Systems")
