@@ -13,28 +13,45 @@ ratingsFile = 'ratings.dat'
 newuserID = 9999
 seed = 42
 
-# load file
-fid = open(pklfile,'rb')
-movieRatings = pickle.load(fid)
-fid.close()
-
-
-genres = list(movieRatings.columns[3:21])
-
-
-
 ### FUNCTION TO OBTAIN THE RECOMMENDATIONS
+@st.cache
 def getGenderBasedRecommendations(movieRatings,genre,K):
     f = movieRatings[movieRatings[genre]==1] 
-    byPopularity = f.sort_values(by=['nReviews','avgRating'],ascending=False, ignore_index=True)
+    byPopularity = f.sort_values(by=['nReviews','avgRating'],ascending=False, ignore_index=True)[['Title','avgRating','nReviews']][0:K]
     # add filter by number of reviews, sort by average rating
     f2 = f[f['nReviews']>=MINREVIEW] 
-    byRating = f2.sort_values(by=['avgRating','nReviews'],ascending=False, ignore_index=True)
-    return byPopularity[['Title','avgRating','nReviews']][0:K], byRating[['Title','avgRating','nReviews']][0:K]
+    byRating = f2.sort_values(by=['avgRating','nReviews'],ascending=False, ignore_index=True)[['Title','avgRating','nReviews']][0:K]
+    # re-index to start at 1
+    byPopularity.index = range(1,K+1)
+    byRating.index = range(1,K+1)
+    # change column names
+    cols = ['Movie Title','Average Rating','Number of Reviews']
+    byPopularity.columns = cols
+    byRating.columns = cols
+    return byPopularity, byRating
 
+### FUNCTIONS TO LOAD THE DATA
+@st.cache
+def loadRatings(file):
+    ratings = pd.read_csv(ratingsFile,sep='::',header=None,engine='python',names=['UserID','MovieID','Rating','Timestamp'],index_col=False)
+    movies = list(set(ratings['MovieID']))
+    return ratings, movies
 
-# list of 10 most popular movies for review (abstracted from inspection of movieRatings)
-top10 = movieRatings.sort_values(by='nReviews',ascending=False,ignore_index=True)[:10]
+@st.cache
+def loadPPratings(file):
+    # load pre-processed summary movie ratings files
+    fid = open(pklfile,'rb')
+    movieRatings = pickle.load(fid)
+    fid.close()
+    # get list of genres
+    genres = list(movieRatings.columns[3:21])
+    # list of 10 most popular movies for review (abstracted from inspection of movieRatings)
+    top10 = movieRatings.sort_values(by='nReviews',ascending=False,ignore_index=True)[:10]
+    return movieRatings, genres, top10
+
+### LOAD & CACHE DATA
+movieRatings, genres, top10 = loadPPratings(pklfile)
+ratings, movies = loadRatings(ratingsFile)
 
 ### CREATE THE SIDE BAR FOR CHOICE OF RECOMMENDER SYSTEM
 st.sidebar.title("Recommender Systems")
@@ -53,13 +70,6 @@ if radio == "Genre-based":
      genres)
     # obtain recommendations
     byPopularity, byRating = getGenderBasedRecommendations(movieRatings,genre,K)
-    # re-index to start at 1
-    byPopularity.index = range(1,K+1)
-    byRating.index = range(1,K+1)
-    # change column names
-    cols = ['Movie Title','Average Rating','Number of Reviews']
-    byPopularity.columns = cols
-    byRating.columns = cols
     # display results
     st.write('Top',K,genre,'movies by popularity:')
     st.table(byPopularity.style.format({ 'Average Rating': '{:.2f}','Number of Reviews':'{:.0f}'}))
@@ -70,8 +80,6 @@ if radio == "Genre-based":
 
 # collaborative recommendation
 elif radio == "Collaborative":
-    ratings = pd.read_csv(ratingsFile,sep='::',header=None,engine='python',names=['UserID','MovieID','Rating','Timestamp'],index_col=False)
-    movies = list(set(ratings['MovieID']))
     st.write("Please rate the following movies:")
     #left_column, right_column = st.columns(2)
     newRatings = np.zeros(10)
